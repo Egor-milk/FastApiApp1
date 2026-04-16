@@ -1,5 +1,3 @@
-from pydantic import BaseModel
-
 from database import new_session, TasksOrm
 from sqlalchemy import select
 from schemas import STaskAdd, STask
@@ -7,9 +5,9 @@ from schemas import STaskAdd, STask
 
 class TaskRepository:
     @classmethod
-    async def add_one(cls, task: STaskAdd) -> int:
+    async def add_one(cls, data: STaskAdd) -> int:
         async with new_session() as session:
-            task_dict = task.model_dump()
+            task_dict = data.model_dump()
 
             task = TasksOrm(**task_dict)
             session.add(task)
@@ -27,8 +25,9 @@ class TaskRepository:
             query = select(TasksOrm)
             result = await session.execute(query)
             task_models = result.scalars().all()
+            print(task_models)
             # scalars() Этот метод говорит SQLAlchemy:
             # "Возьми из каждой строки только первый элемент и верни его".
-            task_schemas = [STask.model_validate() for task in task_models]
+            task_schemas = [STask.model_validate(task_model) for task_model in task_models]
             # STask.model_validate() проверяет соответсвуте ли тип типу "STask"
             return task_schemas
